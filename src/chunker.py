@@ -7,8 +7,10 @@ def chunk_pages(
     """
     Split page text into overlapping character-based chunks.
 
-    Each chunk retains its source page number.
+    Each chunk retains its original page number.
     """
+
+    # Validate chunk settings
     if chunk_size <= 0:
         raise ValueError("chunk_size must be greater than zero")
 
@@ -25,10 +27,13 @@ def chunk_pages(
         page_number = page["page_number"]
         text = page["text"].strip()
 
+        # Skip empty pages
         if not text:
             continue
 
-        for start in range(0, len(text), step):
+        start = 0
+
+        while start < len(text):
             chunk_text = text[start:start + chunk_size].strip()
 
             if chunk_text:
@@ -36,5 +41,12 @@ def chunk_pages(
                     "page_number": page_number,
                     "text": chunk_text,
                 })
+
+            # Stop when the current chunk reaches the end.
+            # This prevents a redundant trailing chunk.
+            if start + chunk_size >= len(text):
+                break
+
+            start += step
 
     return chunks
