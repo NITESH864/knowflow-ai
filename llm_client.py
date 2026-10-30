@@ -3,10 +3,10 @@
 import requests
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
-OPENAI_URL = "https://api.openai.com/v1/chat/completions"
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 DEFAULT_MODEL = "llama3.2:1b"
-DEFAULT_OPENAI_MODEL = "gpt-4.1-mini"
+DEFAULT_GROQ_MODEL = "openai/gpt-oss-20b"
 
 
 def _get_secret(name: str, default: str = "") -> str:
@@ -14,7 +14,6 @@ def _get_secret(name: str, default: str = "") -> str:
     if value:
         return value
 
-    # Streamlit Community Cloud secrets.
     try:
         import streamlit as st
         return str(st.secrets.get(name, default))
@@ -29,26 +28,25 @@ def generate_text(
     if not prompt.strip():
         raise ValueError("Prompt cannot be empty")
 
-    api_key = _get_secret("OPENAI_API_KEY")
+    groq_key = _get_secret("GROQ_API_KEY")
 
-    if api_key:
-        hosted_model = _get_secret(
-            "OPENAI_MODEL", DEFAULT_OPENAI_MODEL
+    if groq_key:
+        groq_model = _get_secret(
+            "GROQ_MODEL", DEFAULT_GROQ_MODEL
         )
 
         response = requests.post(
-            OPENAI_URL,
+            GROQ_URL,
             headers={
-                "Authorization": f"Bearer {api_key}",
+                "Authorization": f"Bearer {groq_key}",
                 "Content-Type": "application/json",
             },
             json={
-                "model": hosted_model,
+                "model": groq_model,
                 "messages": [
                     {
                         "role": "system",
                         "content": (
-                            "You are a helpful AI assistant. "
                             "Answer accurately and clearly. "
                             "For document questions, use only "
                             "the supplied document context. "
@@ -58,6 +56,7 @@ def generate_text(
                     {"role": "user", "content": prompt},
                 ],
                 "temperature": 0,
+                "max_tokens": 1024,
             },
             timeout=120,
         )
@@ -67,15 +66,14 @@ def generate_text(
         answer = (
             result["choices"][0]["message"]["content"] or ""
         ).strip()
+
     else:
         payload = {
             "model": model,
             "prompt": prompt,
             "system": (
-                "You are a helpful AI assistant. "
-                "Give accurate, clear answers. "
-                "If you are unsure about a fact, "
-                "say so instead of inventing information."
+                "Answer accurately and clearly. "
+                "If unsure, do not invent facts."
             ),
             "stream": False,
             "options": {"temperature": 0},
@@ -98,10 +96,7 @@ def generate_text(
 
 
 if __name__ == "__main__":
-    question = (
-        "Explain Retrieval-Augmented Generation and "
-        "give one example using an employee policy PDF."
-    )
+    question = "Explain RAG in one sentence."
     try:
         print(generate_text(question))
     except (requests.RequestException, ValueError, RuntimeError) as error:
