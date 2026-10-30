@@ -1,212 +1,244 @@
-# KnowFlow AI 📚
+# KnowFlow AI
 
-**A private, local-first AI assistant for asking questions about PDF documents.**
+**KnowFlow AI** is a Streamlit-based PDF question-answering application
+built around Retrieval-Augmented Generation (RAG). Upload a PDF, ask
+questions about its contents, and receive answers grounded in retrieved
+document context with source references.
 
-KnowFlow AI uses Retrieval-Augmented Generation (RAG) to retrieve relevant passages from an uploaded PDF and generate answers grounded in that document. It is built with Streamlit, Ollama, sentence-transformers, and FAISS.
+Repository:
+[NITESH864/knowflow-ai](https://github.com/NITESH864/knowflow-ai)
+
+## Live Demo
+
+Try KnowFlow AI here:
+
+**[Launch KnowFlow AI](https://knowflow-ai-ksbvcp9po57tmygg7ysfkb.streamlit.app/)**
+
+Upload a PDF, ask questions about its content, and review the generated answers and available source references.
 
 ## Features
 
-- **PDF ingestion:** Extracts text from PDF documents.
-- **Text chunking:** Splits extracted content into smaller chunks for retrieval.
-- **Semantic search:** Uses sentence embeddings and FAISS similarity search.
-- **Hybrid retrieval:** Combines semantic and lexical relevance signals to improve retrieval.
-- **Grounded answers:** Uses a local Ollama language model to answer questions using retrieved document context.
-- **Source citations:** Returns the source PDF name and page numbers for supporting passages.
-- **Unsupported-question handling:** Returns a clear fallback response when relevant information cannot be found.
-- **Streamlit dashboard:** Dark-themed interface for uploading a PDF, indexing it, chatting with the document, and viewing document status.
-- **Local-first workflow:** Designed to run on your own computer with a local model.
+-   Ask questions about an uploaded PDF.
+-   Extract and chunk PDF text for retrieval.
+-   Generate semantic embeddings with Sentence Transformers.
+-   Retrieve relevant chunks using FAISS.
+-   Generate answers using Groq-hosted inference or local Ollama
+    inference.
+-   Display source information and page references where available.
+-   Run automated tests and a RAG evaluation script.
 
-## Technology Stack
+## How it works
 
-| Component | Technology |
-|---|---|
-| User interface | Streamlit |
-| Language model runtime | Ollama |
-| LLM | `llama3.2:1b` |
-| Embeddings | `sentence-transformers/all-MiniLM-L6-v2` |
-| Vector search | FAISS |
-| PDF text extraction | PyMuPDF |
-| Language | Python |
-| Testing | pytest |
+1.  Read the uploaded PDF.
+2.  Split extracted text into chunks.
+3.  Embed the chunks using `all-MiniLM-L6-v2`.
+4.  Index and retrieve relevant chunks with FAISS.
+5.  Send the retrieved context and question to the configured language
+    model.
+6.  Display the answer and available source references.
 
-## How It Works
-
-1. Upload a PDF through the Streamlit interface.
-2. Extract text and split it into chunks while retaining page metadata.
-3. Generate embeddings for the chunks.
-4. Store and search the embeddings with FAISS.
-5. Retrieve relevant context for the user's question.
-6. Pass the retrieved context to the local language model.
-7. Display the answer and available source-page citations.
-
-```text
-PDF Upload
-    |
-    v
-Text Extraction (PyMuPDF)
-    |
-    v
-Chunking + Page Metadata
-    |
-    v
-Sentence-Transformer Embeddings
-    |
-    v
-FAISS Vector Search + Retrieval
-    |
-    v
-Relevant Context
-    |
-    v
-Local Ollama LLM
-    |
-    v
-Answer + Source Citations
+``` text
+PDF upload
+   -> PDF text extraction
+   -> Text chunking
+   -> Sentence Transformers embeddings
+   -> FAISS retrieval <- User question
+   -> Retrieved document context
+   -> Groq (cloud) or Ollama (local)
+   -> Answer with source references
 ```
 
-## Prerequisites
+## Tech stack
 
-- Windows, macOS, or Linux with Python installed
-- [Ollama](https://ollama.com/) installed and running
-- Git (optional, for cloning the repository)
+-   Python
+-   Streamlit
+-   PyMuPDF for PDF text extraction
+-   Sentence Transformers for embeddings
+-   FAISS CPU for vector search
+-   Requests for API calls
+-   Groq API for hosted inference
+-   Ollama for local inference
+-   pytest for automated tests
 
-Pull the configured model in Ollama:
+The current embedding model is `all-MiniLM-L6-v2`. The default local
+Ollama model is `llama3.2:1b`. The default Groq model in the client is
+`openai/gpt-oss-20b`; availability depends on your Groq account and
+provider configuration.
 
-```bash
-ollama pull llama3.2:1b
+## Repository structure
+
+``` text
+knowflow-ai/
+├── app.py
+├── llm_client.py
+├── src/
+│   ├── chunker.py
+│   ├── embeddings.py
+│   ├── ingestion.py
+│   ├── pdf_reader.py
+│   ├── rag.py
+│   ├── retriever.py
+│   └── vector_store.py
+├── tests/
+├── data/
+│   └── sample_policy.pdf
+├── evaluate_rag.py
+├── requirements.txt
+├── README.md
+└── .gitignore
 ```
 
-## Installation
+The repository may also contain evaluation, debugging, and manual test
+scripts.
+
+## Getting started
 
 ### 1. Clone the repository
 
-Replace `YOUR-USERNAME` with your GitHub username after publishing the repository.
-
-```bash
-git clone https://github.com/YOUR-USERNAME/knowflow-ai.git
+``` bash
+git clone https://github.com/NITESH864/knowflow-ai.git
 cd knowflow-ai
 ```
 
-If you already have the project locally, open a terminal in the project folder instead.
+### 2. Create a virtual environment
 
-### 2. Create and activate a virtual environment
+**Windows PowerShell**
 
-**Windows PowerShell:**
-
-```powershell
-py -m venv .venv
+``` powershell
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-If PowerShell blocks activation, consult the [Python documentation](https://docs.python.org/3/library/venv.html) for your environment's activation policy.
+**macOS / Linux**
+
+``` bash
+python -m venv .venv
+source .venv/bin/activate
+```
 
 ### 3. Install dependencies
 
-If the repository contains a `requirements.txt` file:
-
-```powershell
-python -m pip install -r requirements.txt
+``` bash
+python -m pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
-If there is no `requirements.txt` yet, create one from the project's verified dependencies before following this step. Do not install arbitrary package versions without checking the project's compatibility.
+### 4. Configure the language model
 
-### 4. Start Ollama
+KnowFlow AI supports Groq-hosted inference and local Ollama inference
+through `llm_client.py`.
 
-Ensure Ollama is installed and running, and that the configured model is available:
+#### Option A: Groq API
 
-```powershell
-ollama list
-ollama pull llama3.2:1b
+For Streamlit Community Cloud, open the app's **Settings → Secrets** and
+add:
+
+``` toml
+GROQ_API_KEY = "your-groq-api-key"
+GROQ_MODEL = "openai/gpt-oss-20b"
 ```
+
+Replace the example value with your own API key. Never commit API keys
+or place them directly in source code. Make sure the selected model is
+available to your Groq account.
+
+The client uses Groq when `GROQ_API_KEY` is available.
+
+#### Option B: Ollama (local inference)
+
+1.  Install and start [Ollama](https://ollama.com/).
+
+2.  Pull the default model:
+
+    ``` bash
+    ollama pull llama3.2:1b
+    ```
+
+3.  Ensure Ollama is running locally before starting the app.
+
+When no Groq API key is configured, the current client falls back to
+`http://localhost:11434/api/generate`. This fallback requires Ollama to
+be running on the same machine as the app. A cloud-hosted app cannot use
+`localhost` to reach Ollama on your personal computer.
 
 ### 5. Run the app
 
-From the project root, with the virtual environment activated:
-
-```powershell
-python -m streamlit run app.py
+``` bash
+streamlit run app.py
 ```
 
-Streamlit will print the local URL in the terminal, commonly `http://localhost:8501`.
+Open the local URL printed by Streamlit in your browser.
 
-## Usage
+## Tests and evaluation
 
-1. Start the application.
-2. Upload a PDF using the file uploader.
-3. Wait for indexing to complete.
-4. Ask questions that can be answered from the document.
-5. Review the answer and its source filename/page citations.
+Run the test suite:
 
-**Note:** The current workflow is designed for one indexed PDF at a time. Answers depend on the information available in the uploaded document and the passages retrieved for each question. Scanned PDFs may require OCR support if they do not contain extractable text.
-
-## Testing
-
-Run the automated tests:
-
-```powershell
+``` bash
 python -m pytest -q
 ```
 
 Run the RAG evaluation:
 
-```powershell
+``` bash
 python evaluate_rag.py
 ```
 
-### Last reported test results
+### Latest recorded checks
 
-- **Unit tests:** 38 passed
-- **RAG evaluation:** 10/10 checks passed
-- **Evaluation document:** `Tesla_Info.pdf`
-- **Indexed pages:** 70
-- **Indexed chunks:** 725
+  Check                            Result
+  ----------------- ---------------------
+  Automated tests               38 passed
+  RAG evaluation      10/10 checks passed
 
-These are the results reported during development; rerun the commands after changes to verify the current state. Automated checks are useful but do not guarantee every generated answer is factually correct.
+These are the latest recorded local results and may change after code or
+configuration changes.
 
-## Project Structure
+## Deployment
 
-The core files reported for this project include:
+The project has been configured for Streamlit Community Cloud with
+Groq-hosted inference.
 
-```text
-knowflow-ai/
-├── app.py
-├── src/
-│   ├── ingestion.py
-│   ├── retriever.py
-│   ├── rag.py
-│   └── vector_store.py
-├── tests/
-│   └── test_rag.py
-├── debug_questions.py
-├── evaluate_rag.py
-└── README.md
-```
+To deploy your own copy:
 
-Your exact folder contents may differ; keep this section aligned with the files actually present in your repository.
+1.  Push the project to GitHub.
+2.  Create an app in [Streamlit Community
+    Cloud](https://share.streamlit.io/) and select `app.py` as the entry
+    point.
+3.  Add `GROQ_API_KEY` and optionally `GROQ_MODEL` under **Settings →
+    Secrets**.
+4.  Deploy or reboot the app after changing secrets.
 
-## Privacy and Limitations
+**Live demo:** Add the exact Streamlit Community Cloud URL here once
+confirmed. No demo URL is included because the exact public URL was not
+available for this README.
 
-- The project is designed around a local Ollama model and local document processing.
-- Do not upload confidential PDFs unless you understand how every configured component handles data.
-- Answer quality depends on PDF text extraction, retrieval quality, the selected model, and the source document.
-- The application is a document-question-answering assistant, not a substitute for professional advice or independent fact-checking.
+## Security and limitations
 
-## Roadmap
+-   Keep API keys in Streamlit Secrets or environment variables. Never
+    commit credentials.
+-   Cloud deployments cannot access an Ollama server running on your
+    personal computer through `localhost`; use hosted inference for
+    cloud deployment.
+-   Answers depend on the uploaded PDF, retrieval quality, and model
+    output. Check important information against the original document.
+-   Source and page references depend on PDF text extraction and the
+    document-processing pipeline.
 
-Potential future improvements:
+## Future improvements
 
-- Multi-PDF indexing and document selection
-- More detailed source excerpts alongside page citations
-- Improved answer formatting and factual consistency
-- OCR support for scanned documents
-- Additional evaluation questions and retrieval metrics
-- Demo screenshots and a short project walkthrough
+-   Expand the evaluation set with more questions and documents.
+-   Measure retrieval improvements against a fixed evaluation set.
+-   Improve loading and error states in the interface.
+-   Add a verified public demo URL and screenshots.
 
 ## Author
 
-**Nitesh Gupta**  
-Computer Science Engineering
+**Nitesh Gupta**
 
----
+-   GitHub: [@NITESH864](https://github.com/NITESH864)
 
-If you find a bug or have a suggestion, open an issue in the repository after it is published.
+## License
+
+A license has not been specified in this README. Add a `LICENSE` file
+and update this section if you choose to publish the project under a
+particular license.
