@@ -671,9 +671,7 @@ if st.session_state.retriever is not None:
 
                 except Exception as exc:
                     st.error(
-                        "Could not generate an answer. Check that "
-                        "Ollama is running and the configured model "
-                        "is available."
+                        "Could not generate an answer. Check the hosted API configuration or local Ollama service."
                     )
 
                     with st.expander("Technical error details"):
